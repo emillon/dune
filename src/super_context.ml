@@ -91,7 +91,7 @@ let (expand_vars, expand_vars_path) =
     String_with_vars.expand ~mode:Single ~dir s ~f:(fun v _syntax_version ->
       match String_with_vars.Var.full_name v with
       | "ROOT" -> Some [Value.Path t.context.build_dir]
-      | "SCOPE_ROOT" -> Some [Value.Path (Scope.root scope)]
+      | "SCOPE_ROOT" when false -> Some [Value.Path (Scope.root scope)]
       | var ->
         (match expand_var_no_root t var with
          | Some _ as x -> x
@@ -745,7 +745,8 @@ module Action = struct
         let loc = String_with_vars.Var.loc var in
         match var_name with
         | "ROOT" -> Some (path_exp sctx.context.build_dir)
-        | "SCOPE_ROOT" -> Some (path_exp (Scope.root scope))
+        | "SCOPE_ROOT" when syntax_version < (1, 0) -> Some (path_exp (Scope.root scope))
+        | "project_root" when syntax_version >= (1, 0) -> Some (path_exp (Scope.root scope))
         | "@" -> begin
             match targets_written_by_user with
             | Infer -> Loc.fail loc "You cannot use ${@} with inferred rules."
