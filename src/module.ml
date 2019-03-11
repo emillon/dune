@@ -533,15 +533,15 @@ module Source = struct
 
 end
 
-let pped =
-  let pped_path path ~suffix =
+let pped ?(suffix=".pp") =
+  let pped_path path =
     (* We need to insert the suffix before the extension as some tools
        inspect the extension *)
     let base, ext = Path.split_extension path in
     Path.extend_basename base ~suffix:(suffix ^ ext)
   in
   map_files ~f:(fun _kind file ->
-    let pp_path = pped_path file.path ~suffix:".pp" in
+    let pp_path = pped_path file.path in
     { file with path = pp_path })
 
 let ml_source =

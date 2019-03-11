@@ -22,8 +22,8 @@ let rules (t : Dune_file.Tests.t) ~sctx ~dir ~scope ~expander ~dir_contents
     let run_action =
       match t.action with
       | Some a -> a
-      | None -> Action_unexpanded.Run (
-        String_with_vars.make_var loc test_var_name, [])
+      | None ->
+        Action_unexpanded.run (String_with_vars.make_var loc test_var_name) []
     in
     let extra_bindings =
       let test_exe = s ^ ".exe" in

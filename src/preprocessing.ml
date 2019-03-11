@@ -92,9 +92,11 @@ end
 
 let pped_module m ~f =
   let pped = Module.pped m in
+  let pped_errors = Module.pped ~suffix:".pp-errors" m in
   Module.iter m ~f:(fun kind file ->
     let pp_path = Option.value_exn (Module.file pped kind) in
-    f kind file.path pp_path);
+    let pp_errors_path = Option.value_exn (Module.file pped_errors kind) in
+    f kind file.path pp_path pp_errors_path);
   pped
 
 module Driver = struct
@@ -647,7 +649,7 @@ let make sctx ~dir ~expander ~dep_kind ~lint ~preprocess
     | Action (loc, action) ->
       (fun m ~lint ->
          let ast =
-           pped_module m ~f:(fun _kind src dst ->
+           pped_module m ~f:(fun _kind src dst _errors ->
              let action = action_for_pp sctx ~dep_kind ~loc ~expander
                             ~action ~src ~target:(Some dst)
              in
@@ -681,7 +683,7 @@ let make sctx ~dir ~expander ~dep_kind ~lint ~preprocess
         (fun m ~lint ->
            let ast = setup_reason_rules sctx m in
            if lint then lint_module ~ast ~source:m;
-           pped_module ast ~f:(fun kind src dst ->
+           pped_module ast ~f:(fun kind src dst dst_errors ->
              SC.add_rule sctx ~loc ~dir
                (promote_correction ~suffix:corrected_suffix
                   (Option.value_exn (Module.file m kind))
@@ -698,7 +700,23 @@ let make sctx ~dir ~expander ~dep_kind ~lint ~preprocess
                          ; A "-o"; Target dst
                          ; Ml_kind.ppx_driver_flag kind; Dep src
                          ; Dyn (fun x -> As x)
-                         ])))))
+                         ])));
+             SC.add_rule sctx ~loc ~dir
+               ( preprocessor_deps >>^ ignore >>>
+                   Build.of_result_map driver_and_flags
+                     ~targets:[dst_errors]
+                     ~f:(fun (exe, flags) ->
+                       flags >>>
+                       Build.run ~strict:false ~dir:(SC.context sctx).build_dir
+                         ~stderr_to:dst_errors
+                         (Ok exe)
+                         [ args
+                         ; Ml_kind.ppx_driver_flag kind; Dep src
+                         ; Dyn (fun x -> As x)
+                         ]
+                     )
+               )
+           ))
       end else begin
         let pp_flags = Build.of_result (
           let open Result.O in

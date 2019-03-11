@@ -125,7 +125,7 @@ let pp_flags sctx ~expander ~dir_kind { preprocess; libname; _ } =
   end
   | Action (_, (action : Action_dune_lang.t)) ->
     begin match action with
-    | Run (exe, args) ->
+    | Run (exe, args, _strict (* XXX *)) ->
       let open Option.O in
       List.destruct_last args >>= (fun (args, input_file) ->
         if String_with_vars.is_var input_file ~name:"input-file" then

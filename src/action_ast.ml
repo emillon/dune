@@ -33,7 +33,7 @@ struct
           (let+ prog = Program.decode
            and+ args = repeat String.decode
            in
-           Run (prog, args))
+           Run (prog, args, true))
         ; "chdir",
           (let+ dn = path
            and+ t = t
@@ -135,7 +135,7 @@ struct
     let string = String.encode in
     let path = Path.encode in
     function
-    | Run (a, xs) ->
+    | Run (a, xs, _strict (* XXX *)) ->
       List (atom "run" :: program a :: List.map xs ~f:string)
     | Chdir (a, r) -> List [atom "chdir" ; path a ; encode r]
     | Setenv (k, v, r) -> List [atom "setenv" ; string k ; string v ; encode r]
@@ -181,7 +181,7 @@ struct
         ; path target
         ]
 
-  let run prog args = Run (prog, args)
+  let run ?(strict=true) prog args = Run (prog, args, strict)
   let chdir path t = Chdir (path, t)
   let setenv var value t = Setenv (var, value, t)
   let with_stdout_to path t = Redirect (Stdout, path, t)

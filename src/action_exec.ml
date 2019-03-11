@@ -7,7 +7,7 @@ type exec_context =
   ; purpose : Process.purpose
   }
 
-let exec_run ~ectx ~dir ~env ~stdout_to ~stderr_to prog args =
+let exec_run ~ectx ~dir ~env ~stdout_to ~stderr_to ~strict prog args =
   begin match ectx.context with
   | None
   | Some { Context.for_host = None; _ } -> ()
@@ -22,20 +22,26 @@ let exec_run ~ectx ~dir ~env ~stdout_to ~stderr_to prog args =
     invalid_prefix (Path.relative Path.build_dir target.name);
     invalid_prefix (Path.relative Path.build_dir ("install/" ^ target.name));
   end;
-  Process.run Strict ~dir ~env
-    ~stdout_to ~stderr_to
-    ~purpose:ectx.purpose
-    prog args
+  let run mode =
+    Process.run mode ~dir ~env
+      ~stdout_to ~stderr_to
+      ~purpose:ectx.purpose
+      prog args
+  in
+  if strict then
+    run Strict
+  else
+    run (Accept All) >>| ignore
 
 let exec_echo stdout_to str =
   Fiber.return (output_string (Process.Output.channel stdout_to) str)
 
 let rec exec t ~ectx ~dir ~env ~stdout_to ~stderr_to =
   match (t : Action.t) with
-  | Run (Error e, _) ->
+  | Run (Error e, _, _) ->
     Action.Prog.Not_found.raise e
-  | Run (Ok prog, args) ->
-    exec_run ~ectx ~dir ~env ~stdout_to ~stderr_to prog args
+  | Run (Ok prog, args, strict (* XXX *)) ->
+    exec_run ~ectx ~dir ~env ~stdout_to ~stderr_to ~strict prog args
   | Chdir (dir, t) ->
     exec t ~ectx ~dir ~env ~stdout_to ~stderr_to
   | Setenv (var, value, t) ->
@@ -93,9 +99,9 @@ let rec exec t ~ectx ~dir ~env ~stdout_to ~stderr_to =
     let path, arg =
       Utils.system_shell_exn ~needed_to:"interpret (system ...) actions"
     in
-    exec_run ~ectx ~dir ~env ~stdout_to ~stderr_to path [arg; cmd]
+    exec_run ~ectx ~dir ~env ~stdout_to ~stderr_to ~strict:true path [arg; cmd]
   | Bash cmd ->
-    exec_run ~ectx ~dir ~env ~stdout_to ~stderr_to
+    exec_run ~ectx ~dir ~env ~stdout_to ~stderr_to ~strict:true
       (Utils.bash_exn ~needed_to:"interpret (bash ...) actions")
       ["-e"; "-u"; "-o"; "pipefail"; "-c"; cmd]
   | Write_file (fn, s) ->

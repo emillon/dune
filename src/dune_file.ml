@@ -303,12 +303,12 @@ module Preprocess = struct
       else
         Action
           (loc,
-           Run
+           Action_dune_lang.run
              (String_with_vars.make_var loc "libexec"
-                ~payload:"dune.configurator:../future-syntax.exe",
+                ~payload:"dune.configurator:../future-syntax.exe")
               [ String_with_vars.make_text loc "-dump-ast"
               ; String_with_vars.make_var loc "input-file"
-              ]))
+              ])
 end
 
 module Blang = struct
@@ -1686,12 +1686,13 @@ module Rule = struct
           (loc,
            Chdir
              (S.virt_var __POS__ "workspace_root",
-              Run (S.virt_text __POS__ "ocamllex",
-                   [ S.virt_text __POS__ "-q"
-                   ; S.virt_text __POS__ "-o"
-                   ; S.virt_var __POS__ "targets"
-                   ; S.virt_var __POS__"deps"
-                   ])))
+              Action_dune_lang.run
+                (S.virt_text __POS__ "ocamllex")
+                [ S.virt_text __POS__ "-q"
+                ; S.virt_text __POS__ "-o"
+                ; S.virt_var __POS__ "targets"
+                ; S.virt_var __POS__"deps"
+                ]))
       ; mode
       ; locks = []
       ; loc
@@ -1708,8 +1709,9 @@ module Rule = struct
           (loc,
            Chdir
              (S.virt_var __POS__ "workspace_root",
-              Run (S.virt_text __POS__ "ocamlyacc",
-                   [S.virt_var __POS__ "deps"])))
+              Action_dune_lang.run
+                (S.virt_text __POS__ "ocamlyacc")
+                [S.virt_var __POS__ "deps"]))
       ; mode
       ; locks = []
       ; loc

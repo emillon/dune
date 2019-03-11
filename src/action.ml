@@ -10,8 +10,8 @@ module Make_mapper
 = struct
   let map_one_step f (t : Src.t) ~dir ~f_program ~f_string ~f_path : Dst.t =
     match t with
-    | Run (prog, args) ->
-      Run (f_program ~dir prog, List.map args ~f:(f_string ~dir))
+    | Run (prog, args, strict) ->
+      Run (f_program ~dir prog, List.map args ~f:(f_string ~dir), strict)
     | Chdir (fn, t) ->
       Chdir (f_path ~dir fn, f t ~dir:fn ~f_program ~f_string ~f_path)
     | Setenv (var, value, t) ->

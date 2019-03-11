@@ -199,17 +199,23 @@ let prog_and_args ?(dir=Path.root) prog args =
     >>>
     arr fst))
 
-let run ~dir ?stdout_to prog args =
-  let targets = Arg_spec.add_targets args (Option.to_list stdout_to) in
+let run ~dir ?stdout_to ?stderr_to ?(strict=true) prog args =
+  let targets = Arg_spec.add_targets args (Option.to_list stdout_to @
+                                           Option.to_list stderr_to) in
   prog_and_args ~dir prog args
   >>>
   Targets targets
   >>^ (fun (prog, args) ->
-    let action : Action.t = Run (prog, args) in
+    let action : Action.t = Run (prog, args, strict) in
     let action =
       match stdout_to with
       | None      -> action
       | Some path -> Redirect (Stdout, path, action)
+    in
+    let action =
+      match stderr_to with
+      | None      -> action
+      | Some path -> Redirect (Stderr, path, action)
     in
     Action.Chdir (dir, action))
 

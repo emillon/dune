@@ -149,6 +149,8 @@ val memoize : string -> (unit, 'a) t -> (unit, 'a) t
 val run
   :  dir:Path.t
   -> ?stdout_to:Path.t
+  -> ?stderr_to:Path.t
+  -> ?strict:bool
   -> Action.Prog.t
   -> ('a, Arg_spec.dynamic) Arg_spec.t list
   -> ('a, Action.t) t

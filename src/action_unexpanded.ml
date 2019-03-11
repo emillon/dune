@@ -81,7 +81,7 @@ module Partial = struct
 
   let rec expand t ~map_exe ~expander : Unresolved.t =
     match t with
-    | Run (prog, args) ->
+    | Run (prog, args, strict) ->
       let args = List.concat_map args ~f:(E.strings ~expander) in
       let prog, more_args = E.prog_and_args ~expander prog in
       let prog =
@@ -89,7 +89,7 @@ module Partial = struct
         | Search _ -> prog
         | This path -> This (map_exe path)
       in
-      Run (prog, more_args @ args)
+      Run (prog, more_args @ args, strict)
     | Chdir (fn, t) ->
       let fn = E.path ~expander fn in
       let expander = Expander.set_dir expander ~dir:fn in
@@ -163,7 +163,7 @@ end
 
 let rec partial_expand t ~map_exe ~expander : Partial.t =
   match t with
-  | Run (prog, args) ->
+  | Run (prog, args, strict) ->
     let args =
       List.concat_map args ~f:(fun arg ->
         match E.strings ~expander arg with
@@ -179,9 +179,9 @@ let rec partial_expand t ~map_exe ~expander : Partial.t =
           | Search _ -> prog
           | This path -> This (map_exe path)
         in
-        Run (Left prog, more_args @ args)
+        Run (Left prog, more_args @ args, strict)
       | Right _ as prog ->
-        Run (prog, args)
+        Run (prog, args, strict)
     end
   | Chdir (fn, t) -> begin
       let res = E.path ~expander fn in
@@ -296,7 +296,7 @@ module Infer = struct
     open Prim
     let rec infer acc t =
       match t with
-      | Run (prog, _) -> acc +<! prog
+      | Run (prog, _, _) -> acc +<! prog
       | Redirect (_, fn, t)  -> infer (acc +@ fn) t
       | Cat fn               -> acc +< fn
       | Write_file (fn, _)  -> acc +@ fn

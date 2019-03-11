@@ -31,7 +31,7 @@ module type Ast = sig
   end
 
   type t =
-    | Run            of program * string list
+    | Run            of program * string list * bool
     | Chdir          of path * t
     | Setenv         of string * string * t
     | Redirect       of Outputs.t * path * t
@@ -59,7 +59,7 @@ module type Helpers = sig
   type string
   type t
 
-  val run : program -> string list -> t
+  val run : ?strict:bool -> program -> string list -> t
   val chdir : path -> t -> t
   val setenv : string -> string -> t -> t
   val with_stdout_to : path -> t -> t
