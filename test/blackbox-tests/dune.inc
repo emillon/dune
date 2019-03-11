@@ -1015,6 +1015,14 @@
    (progn (run %{exe:cram.exe} -test run.t) (diff? run.t run.t.corrected)))))
 
 (alias
+ (name pp-errors)
+ (deps (package dune) (source_tree test-cases/pp-errors))
+ (action
+  (chdir
+   test-cases/pp-errors
+   (progn (run %{exe:cram.exe} -test run.t) (diff? run.t run.t.corrected)))))
+
+(alias
  (name ppx-rewriter)
  (deps (package dune) (source_tree test-cases/ppx-rewriter))
  (action
@@ -1437,6 +1445,7 @@
   (alias package-dep)
   (alias path-variables)
   (alias pkg-config-quoting)
+  (alias pp-errors)
   (alias ppx-rewriter)
   (alias preprocess-with-action)
   (alias private-modules)
@@ -1583,6 +1592,7 @@
   (alias output-obj)
   (alias path-variables)
   (alias pkg-config-quoting)
+  (alias pp-errors)
   (alias preprocess-with-action)
   (alias private-modules)
   (alias project-root)

@@ -1,0 +1,4 @@
+(library
+ (name myppx)
+ (libraries ocaml-migrate-parsetree)
+ (kind ppx_rewriter))
